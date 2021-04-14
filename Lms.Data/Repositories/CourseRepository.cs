@@ -36,5 +36,10 @@ namespace Lms.Data.Repositories
         {
             await db.AddAsync(course);
         }
+
+        public void Remove(Course course)
+        {
+            db.Remove(course);
+        }
     }
 }
