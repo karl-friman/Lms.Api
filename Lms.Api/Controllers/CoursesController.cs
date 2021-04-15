@@ -9,6 +9,8 @@ using Lms.Data.Data;
 using Lms.Core.Entities;
 using Lms.Core.Repositories;
 using AutoMapper;
+using Lms.Core.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Lms.Api.Controllers
 {
@@ -29,22 +31,26 @@ namespace Lms.Api.Controllers
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourse()
         {
-            return Ok(await uow.CourseRepository.GetAllCourses());
+            var courses = await uow.CourseRepository.GetAllCourses();
+            var coursesDto = mapper.Map<IEnumerable<Course>>(courses);
+            return Ok(coursesDto);
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<Course>> GetCourse(int? id)
         {
-            var course = await uow.CourseRepository.GetCourse(id);
-            if (course == null)
-            {
-                return NotFound();
-            }
+            if (id is null) return BadRequest();
 
-            return course;
+            var course = await uow.CourseRepository.GetCourse(id);
+
+            if (course == null) return NotFound();
+
+            var courseDto = mapper.Map<Course>(course);
+
+            return Ok(courseDto);
         }
 
         // PUT: api/Courses/5
@@ -71,7 +77,7 @@ namespace Lms.Api.Controllers
                 }
                 else
                 {
-                    throw;
+                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
                 }
             }
 
@@ -110,6 +116,32 @@ namespace Lms.Api.Controllers
         private bool CourseExists(int id)
         {
             return db.Course.Any(e => e.Id == id);
+        }
+
+        [HttpPatch]
+        public async Task<ActionResult<CourseDto>> PatchCourse(int? courseId, JsonPatchDocument<CourseDto> patchDocument)
+        {
+            //Kolla om kursen med courseId finns, returnera NotFound om den inte finns
+            if (courseId is null) return BadRequest();
+
+            var course = await uow.CourseRepository.GetCourse(courseId);
+
+            if (course == null) return NotFound();
+            //Ta fram kursen mha UoW
+
+            var model = mapper.Map<CourseDto>(course);
+            patchDocument.ApplyTo(model, ModelState);
+
+            //Försök validera modellen
+            mapper.Map(model, course);
+            if (await uow.CourseRepository.SaveAsync())
+            {
+                return Ok(mapper.Map<CourseDto>(course));
+            }
+            else
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }

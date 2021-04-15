@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
 using Lms.Core.Entities;
 using Lms.Core.Repositories;
+using AutoMapper;
+using Lms.Core.Dto;
 
 namespace Lms.Api.Controllers
 {
@@ -15,47 +17,53 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
+        private readonly IMapper mapper;
         private readonly LmsApiContext _context;
         private readonly IUnitOfWork uow;
 
-        public ModulesController(LmsApiContext context, IUnitOfWork uow)
+        public ModulesController(IMapper mapper, LmsApiContext context, IUnitOfWork uow)
         {
+            this.mapper = mapper;
             _context = context;
             this.uow = uow;
         }
 
         // GET: api/Modules
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<ModuleDto>>> GetModule()
         {
-            return await _context.Course.ToListAsync();
+            //return await _context.Module.ToListAsync();
+            var modules = await uow.ModuleRepository.GetAllModules();
+            var modulesDto = mapper.Map<IEnumerable<Module>>(modules);
+            return Ok(modulesDto);
         }
 
         // GET: api/Modules/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<Module>> GetModule(int? id)
         {
-            var course = await _context.Course.FindAsync(id);
+            if (id is null) return BadRequest();
 
-            if (course == null)
-            {
-                return NotFound();
-            }
+            var module = await uow.ModuleRepository.GetModule(id);
 
-            return course;
+            if (module == null) return NotFound();
+
+            var moduleDto = mapper.Map<Module>(module);
+
+            return Ok(moduleDto);
         }
 
         // PUT: api/Modules/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, Course course)
+        public async Task<IActionResult> PutModule(int id, Module module)
         {
-            if (id != course.Id)
+            if (id != module.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(course).State = EntityState.Modified;
+            _context.Entry(module).State = EntityState.Modified;
 
             try
             {
@@ -63,13 +71,13 @@ namespace Lms.Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CourseExists(id))
+                if (!ModuleExists(id))
                 {
                     return NotFound();
                 }
                 else
                 {
-                    throw;
+                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
                 }
             }
 
@@ -79,33 +87,33 @@ namespace Lms.Api.Controllers
         // POST: api/Modules
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Course>> PostCourse(Course course)
+        public async Task<ActionResult<Module>> PostModule(Module module)
         {
-            _context.Course.Add(course);
+            _context.Module.Add(module);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCourse", new { id = course.Id }, course);
+            return CreatedAtAction("GetModule", new { id = module.Id }, module);
         }
 
         // DELETE: api/Modules/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCourse(int id)
+        public async Task<IActionResult> DeleteModule(int id)
         {
-            var course = await _context.Course.FindAsync(id);
-            if (course == null)
+            var module = await _context.Module.FindAsync(id);
+            if (module == null)
             {
                 return NotFound();
             }
 
-            _context.Course.Remove(course);
+            _context.Module.Remove(module);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CourseExists(int id)
+        private bool ModuleExists(int id)
         {
-            return _context.Course.Any(e => e.Id == id);
+            return _context.Module.Any(e => e.Id == id);
         }
     }
 }
