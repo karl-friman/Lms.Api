@@ -27,7 +27,10 @@ namespace Lms.Data.Repositories
             return await db.Course
                 .FirstOrDefaultAsync(m => m.Id == Id);
         }
-
+        public bool Any(int? Id)
+        {
+            return db.Course.Any(m => m.Id == Id);
+        }
         public async Task<bool> SaveAsync()
         {
             return (await db.SaveChangesAsync()) >= 0;

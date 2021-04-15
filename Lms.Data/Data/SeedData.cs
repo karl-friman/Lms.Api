@@ -25,29 +25,41 @@ namespace Lms.Data.Data
 
                 for (int i = 0; i < 20; i++)
                 {
-                    var course = new Course
-                    {
-                        Title = fake.Company.CatchPhrase(),
-                        StartDate = DateTime.Now.AddDays(fake.Random.Int(-2, 2))
-                    };
-
-                    courses.Add(course);
-                }
-
-                for (int i = 0; i < 20; i++)
-                {
                     var module = new Module
                     {
                         Title = fake.Company.CatchPhrase(),
                         StartDate = DateTime.Now.AddDays(fake.Random.Int(-5, 5)),
-                        CourseId = fake.Random.Int(1,20)
+                        //CourseId = fake.Random.Int(1,20)
                     };
 
                     modules.Add(module);
                 }
 
+                for (int i = 0; i < 20; i++)
+                {
+
+                    var someModules = new List<Module>();
+                    var r = new Random();
+
+                    for (int j = 0; j < 4; j++)
+                    {
+                        someModules.Add(modules[r.Next(0, 20)]);
+                    }
+
+                    var course = new Course
+                    {
+                        Title = fake.Company.CatchPhrase(),
+                        StartDate = DateTime.Now.AddDays(fake.Random.Int(-2, 2)),
+                        Modules = someModules
+                    };
+
+                    courses.Add(course);
+                }
+
+
+
                 await context.AddRangeAsync(courses);
-                await context.AddRangeAsync(modules);
+                //await context.AddRangeAsync(modules);
                 await context.SaveChangesAsync();
 
             }

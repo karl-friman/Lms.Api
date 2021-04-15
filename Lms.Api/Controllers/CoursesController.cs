@@ -18,13 +18,13 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class CoursesController : ControllerBase
     {
-        private readonly LmsApiContext db;
+        //private readonly LmsApiContext db;
         private readonly IUnitOfWork uow;
         private readonly IMapper mapper;
 
-        public CoursesController(LmsApiContext db, IUnitOfWork uow, IMapper mapper)
+        public CoursesController(LmsApiContext db, IUnitOfWork uow, IMapper mapper)//(LmsApiContext db, IUnitOfWork uow, IMapper mapper)
         {
-            this.db = db;
+            //this.db = db;
             this.uow = uow;
             this.mapper = mapper;
         }
@@ -34,7 +34,7 @@ namespace Lms.Api.Controllers
         public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourse()
         {
             var courses = await uow.CourseRepository.GetAllCourses();
-            var coursesDto = mapper.Map<IEnumerable<Course>>(courses);
+            var coursesDto = mapper.Map<IEnumerable<CourseDto>>(courses);
             return Ok(coursesDto);
         }
 
@@ -48,7 +48,7 @@ namespace Lms.Api.Controllers
 
             if (course == null) return NotFound();
 
-            var courseDto = mapper.Map<Course>(course);
+            var courseDto = mapper.Map<CourseDto>(course);
 
             return Ok(courseDto);
         }
@@ -63,7 +63,7 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            db.Entry(course).State = EntityState.Modified;
+            //db.Entry(course).State = EntityState.Modified;
 
             try
             {
@@ -106,7 +106,7 @@ namespace Lms.Api.Controllers
                 return NotFound();
             }
 
-            db.Course.Remove(course);
+            uow.CourseRepository.Remove(course);
             await uow.CourseRepository.SaveAsync();
 
             return NoContent();
@@ -115,7 +115,7 @@ namespace Lms.Api.Controllers
 
         private bool CourseExists(int id)
         {
-            return db.Course.Any(e => e.Id == id);
+            return uow.CourseRepository.Any(id);
         }
 
         [HttpPatch]

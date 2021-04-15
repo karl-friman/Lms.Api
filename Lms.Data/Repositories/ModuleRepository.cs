@@ -36,5 +36,13 @@ namespace Lms.Data.Repositories
         {
             await db.AddAsync(module);
         }
+        public void Remove(Module module)
+        {
+            db.Remove(module);
+        }
+        public bool Any(int? Id)
+        {
+            return db.Module.Any(m => m.Id == Id);
+        }
     }
 }

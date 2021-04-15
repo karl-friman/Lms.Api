@@ -10,6 +10,7 @@ using Lms.Core.Entities;
 using Lms.Core.Repositories;
 using AutoMapper;
 using Lms.Core.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Lms.Api.Controllers
 {
@@ -17,24 +18,23 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly LmsApiContext _context;
+        //private readonly LmsApiContext db;
         private readonly IUnitOfWork uow;
+        private readonly IMapper mapper;
 
-        public ModulesController(IMapper mapper, LmsApiContext context, IUnitOfWork uow)
+        public ModulesController(LmsApiContext db, IUnitOfWork uow, IMapper mapper)//(LmsApiContext db, IUnitOfWork uow, IMapper mapper)
         {
-            this.mapper = mapper;
-            _context = context;
+            //this.db = db;
             this.uow = uow;
+            this.mapper = mapper;
         }
 
         // GET: api/Modules
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ModuleDto>>> GetModule()
         {
-            //return await _context.Module.ToListAsync();
             var modules = await uow.ModuleRepository.GetAllModules();
-            var modulesDto = mapper.Map<IEnumerable<Module>>(modules);
+            var modulesDto = mapper.Map<IEnumerable<ModuleDto>>(modules);
             return Ok(modulesDto);
         }
 
@@ -48,7 +48,7 @@ namespace Lms.Api.Controllers
 
             if (module == null) return NotFound();
 
-            var moduleDto = mapper.Map<Module>(module);
+            var moduleDto = mapper.Map<ModuleDto>(module);
 
             return Ok(moduleDto);
         }
@@ -63,11 +63,11 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(module).State = EntityState.Modified;
+            //db.Entry(module).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await uow.ModuleRepository.SaveAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -89,31 +89,59 @@ namespace Lms.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Module>> PostModule(Module module)
         {
-            _context.Module.Add(module);
-            await _context.SaveChangesAsync();
+            //_context.Module.Add(module);
+            await uow.ModuleRepository.SaveAsync();
+            //await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetModule", new { id = module.Id }, module);
         }
 
         // DELETE: api/Modules/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteModule(int id)
+        public async Task<IActionResult> DeleteModule(int? id)
         {
-            var module = await _context.Module.FindAsync(id);
+            var module = await uow.ModuleRepository.GetModule(id);//await _context.Module.FindAsync(id);
             if (module == null)
             {
                 return NotFound();
             }
 
-            _context.Module.Remove(module);
-            await _context.SaveChangesAsync();
+            uow.ModuleRepository.Remove(module);
+            await uow.ModuleRepository.SaveAsync();
 
-            return NoContent();
+            return Ok(module);
+
         }
 
         private bool ModuleExists(int id)
         {
-            return _context.Module.Any(e => e.Id == id);
+            return uow.ModuleRepository.Any(id);
+        }
+
+        [HttpPatch]
+        public async Task<ActionResult<ModuleDto>> PatchModule(int? moduleId, JsonPatchDocument<ModuleDto> patchDocument)
+        {
+            //Kolla om kursen med moduleId finns, returnera NotFound om den inte finns
+            if (moduleId is null) return BadRequest();
+
+            var module = await uow.ModuleRepository.GetModule(moduleId);
+
+            if (module == null) return NotFound();
+            //Ta fram kursen mha UoW
+
+            var model = mapper.Map<ModuleDto>(module);
+            patchDocument.ApplyTo(model, ModelState);
+
+            //Försök validera modellen
+            mapper.Map(model, module);
+            if (await uow.ModuleRepository.SaveAsync())
+            {
+                return Ok(mapper.Map<ModuleDto>(module));
+            }
+            else
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }
