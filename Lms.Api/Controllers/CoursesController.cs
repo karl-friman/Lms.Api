@@ -33,8 +33,8 @@ namespace Lms.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Course>>> GetCourse(bool includeModules = false)
         {
-            var courses = await uow.CourseRepository.GetAllCourses(includeModules);
-            var courseModulesDto = mapper.Map<IEnumerable<CourseModulesDto>>(courses);
+            //var courses = await uow.CourseRepository.GetAllCourses(includeModules);
+            var courseModulesDto = mapper.Map<IEnumerable<CourseModulesDto>>(await uow.CourseRepository.GetAllCourses(includeModules));
             return Ok(courseModulesDto);
         }
 

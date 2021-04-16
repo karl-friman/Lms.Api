@@ -15,5 +15,6 @@ namespace Lms.Core.Entities
         public string Title { get; set; }
         public DateTime StartDate { get; set; }
         public int CourseId { get; set; }
+        public Course Course { get; set; }
     }
 }
