@@ -13,7 +13,7 @@ namespace Lms.Data.Data
     {
         public MapperProfile()
         {
-            CreateMap<Course, CourseDto>().ReverseMap();
+            //CreateMap<Course, CourseDto>().ReverseMap();
             CreateMap<Module, ModuleDto>().ReverseMap();
             CreateMap<Course, CourseModulesDto>()
                 .ForMember(dest => dest.Modules,
