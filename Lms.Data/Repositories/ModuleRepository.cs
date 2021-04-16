@@ -27,7 +27,11 @@ namespace Lms.Data.Repositories
             return await db.Module
                 .FirstOrDefaultAsync(m => m.Id == Id);
         }
-
+        public async Task<Module> GetModule(string title)
+        {
+            return await db.Module
+                .FirstOrDefaultAsync(t => t.Title == title);
+        }
         public async Task<bool> SaveAsync()
         {
             return (await db.SaveChangesAsync()) >= 0;

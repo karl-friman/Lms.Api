@@ -18,13 +18,19 @@ namespace Lms.Data.Repositories
         {
             this.db = db;
         }
-        public async Task<IEnumerable<Course>> GetAllCourses() 
+        public async Task<IEnumerable<Course>> GetAllCourses(bool includeModules) 
         {
-            return await db.Course.ToListAsync();
+            if (includeModules)
+                return await db.Course.Include(m => m.Modules).ToListAsync();
+            else
+                return await db.Course.ToListAsync();
         }
-        public async Task<Course> GetCourse(int? Id)
+        public async Task<Course> GetCourse(int? Id, bool includeModules)
         {
-            return await db.Course
+            if (includeModules)
+                return await db.Course.Include(m => m.Modules).FirstOrDefaultAsync(m => m.Id == Id);
+            else
+                return await db.Course
                 .FirstOrDefaultAsync(m => m.Id == Id);
         }
         public bool Any(int? Id)

@@ -31,26 +31,26 @@ namespace Lms.Api.Controllers
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourse(bool includeModules = false)
         {
-            var courses = await uow.CourseRepository.GetAllCourses();
-            var coursesDto = mapper.Map<IEnumerable<CourseDto>>(courses);
-            return Ok(coursesDto);
+            var courses = await uow.CourseRepository.GetAllCourses(includeModules);
+            var courseModulesDto = mapper.Map<IEnumerable<CourseModulesDto>>(courses);
+            return Ok(courseModulesDto);
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int? id)
+        public async Task<ActionResult<Course>> GetCourse(int? id, bool includeModules = false)
         {
             if (id is null) return BadRequest();
 
-            var course = await uow.CourseRepository.GetCourse(id);
+            var course = await uow.CourseRepository.GetCourse(id, includeModules);
 
             if (course == null) return NotFound();
 
-            var courseDto = mapper.Map<CourseDto>(course);
+            var courseModulesDto = mapper.Map<CourseModulesDto>(course);
 
-            return Ok(courseDto);
+            return Ok(courseModulesDto);
         }
 
         // PUT: api/Courses/5
@@ -100,7 +100,7 @@ namespace Lms.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int? id)
         {
-            var course = await uow.CourseRepository.GetCourse(id);//await _context.Course.FindAsync(id);
+            var course = await uow.CourseRepository.GetCourse(id, includeModules: false);//await _context.Course.FindAsync(id);
             if (course == null)
             {
                 return NotFound();
@@ -124,7 +124,7 @@ namespace Lms.Api.Controllers
             //Kolla om kursen med courseId finns, returnera NotFound om den inte finns
             if (courseId is null) return BadRequest();
 
-            var course = await uow.CourseRepository.GetCourse(courseId);
+            var course = await uow.CourseRepository.GetCourse(courseId, includeModules: false);
 
             if (course == null) return NotFound();
             //Ta fram kursen mha UoW
